@@ -4,7 +4,7 @@ import { Domain } from "./domain";
 import { allDifferent } from "../constraints/factories";
 import { CSP } from "./csp";
 
-export class CspBuilder {
+export class CSPBuilder {
   private variables = new Set<Variable>();
   private domains = new Map<Variable, Domain>();
   private constraints: Constraint[] = [];
@@ -69,7 +69,7 @@ export class CspBuilder {
 
   build(): CSP {
     if (this.variables.size === 0) {
-      throw new Error("Cannot build CSp with no variables");
+      throw new Error("Cannot build CSP with no variables");
     }
 
     return new CSP(Array.from(this.variables), new Map(this.domains), [
