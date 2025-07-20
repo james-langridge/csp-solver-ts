@@ -174,6 +174,56 @@ The solver uses several techniques to improve efficiency:
 
 Note: Performance characteristics will vary based on problem complexity and structure. The implementation prioritizes code clarity and correctness over raw performance.
 
+## Debugging and Logging
+
+The solver includes built-in logging to help understand algorithm behavior:
+
+### Setup
+
+1. Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+
+2. Edit `.env` to enable logging:
+```
+CSP_DEBUG=true
+CSP_LOG_LEVEL=debug  # or trace, info
+```
+
+### Running with Logging
+
+```bash
+# Development mode with hot reload
+npm run dev:debug
+
+# Compiled version
+npm run example:debug
+
+# Without logging (uses defaults)
+npm run dev
+npm run example
+```
+
+Log levels:
+- **info**: High-level solver progress (start, solution found, stats)
+- **debug**: Variable selection, backtracking, inference results
+- **trace**: Detailed step-by-step execution, value assignments, arc processing
+
+Example output with debug logging:
+```
+[INFO] Starting CSP solver { variables: 7, constraints: 9 }
+[DEBUG] Variable WA has domain size 3
+[DEBUG] Variable NT has domain size 3
+[INFO] Beginning search
+[DEBUG] MRV selected WA (domain size: 3, constraints: 2)
+[DEBUG] Selected variable WA with domain size 3
+[DEBUG] AC-3 starting with 2 arcs in queue after WA assignment
+[DEBUG] AC-3 completed: processed 4 arcs
+[DEBUG] Backtracking from WA = red
+[INFO] Solution found! { timeMs: 12.5, nodesExplored: 7, inferencesApplied: 3 }
+```
+
 ## Contributing
 
 Possible areas for enhancement:

@@ -3,14 +3,25 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "tsx examples/usage.ts",
+    "dev:debug": "tsx --env-file=.env examples/usage.ts",
+    "example": "npm run build && node dist/examples/usage.js",
+    "example:debug": "npm run build && node --env-file=.env dist/examples/usage.js",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">=20.6.0"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/node": "^24.0.15",
     "prettier": "3.6.2",
+    "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   }
 }

@@ -3,6 +3,7 @@ import { Value, Variable } from "../data/types";
 import { SolverState } from "./state";
 import { BinaryConstraint } from "../constraints/constraint";
 import { Domain } from "../data/domain";
+import { logger } from "../utils/logger";
 
 /**
  * Implements the AC-3 (Arc Consistency 3) algorithm for constraint propagation.
@@ -30,8 +31,14 @@ export function ac3Inference(
   const queue = initializeArcQueue(csp, recentVariable);
   const domains = new Map(state.domains);
 
+  logger.debug(`AC-3 starting with ${queue.length} arcs in queue after ${recentVariable} assignment`);
+
+  let arcsProcessed = 0;
   while (queue.length > 0) {
     const [xi, xj, constraint] = queue.shift()!;
+    arcsProcessed++;
+
+    logger.trace(`AC-3: Processing arc ${xi} -> ${xj}`);
 
     // Remove inconsistent values from xi's domain
     const revised = revise(domains, xi, xj, constraint);
@@ -40,22 +47,32 @@ export function ac3Inference(
       const xiDomain = domains.get(xi);
 
       if (!xiDomain || xiDomain.size === 0) {
+        logger.debug(`AC-3: Domain wipeout for ${xi} after processing ${arcsProcessed} arcs`);
         return null; // Domain wipeout - no solution possible
       }
 
+      logger.trace(`AC-3: Domain of ${xi} reduced to size ${xiDomain.size}`);
+
       // Xi's domain changed, so we must recheck all arcs (xk, xi)
       // where xk is a neighbor of xi (except xj, which we just processed)
+      let arcsAdded = 0;
       for (const c of csp.constraints) {
         if (c instanceof BinaryConstraint && c.involves(xi)) {
           const other = c.getOther(xi);
           if (other && other !== xj) {
             queue.push([other, xi, c]);
+            arcsAdded++;
           }
         }
+      }
+      
+      if (arcsAdded > 0) {
+        logger.trace(`AC-3: Added ${arcsAdded} arcs to queue`);
       }
     }
   }
 
+  logger.debug(`AC-3 completed: processed ${arcsProcessed} arcs`);
   return state.withInference(domains);
 }
 
@@ -130,12 +147,15 @@ function revise(
   }
 
   if (toRemove.size > 0) {
+    logger.trace(`AC-3: Removing values ${Array.from(toRemove).join(', ')} from ${xi}'s domain`);
+    
     const newDomain = xiDomain.remove(toRemove);
     if (newDomain) {
       domains.set(xi, newDomain);
       return true;
     } else {
       // Domain would be empty - mark it for detection
+      logger.trace(`AC-3: Domain of ${xi} would be empty after revision`);
       domains.set(xi, new Domain(["__EMPTY__"])); // Marker for empty domain
       return true;
     }

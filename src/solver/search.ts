@@ -3,6 +3,7 @@ import { SolverState } from "./state";
 import { selectUnassignedVariable, orderDomainValues } from "./heuristics";
 import { ac3Inference } from "./inference";
 import { Assignment } from "../data/types";
+import { logger } from "../utils/logger";
 
 /**
  * Core backtracking search algorithm with constraint propagation.
@@ -24,23 +25,34 @@ import { Assignment } from "../data/types";
 export function search(csp: CSP, state: SolverState): SolverState | null {
   // Base case: all variables assigned successfully
   if (isComplete(csp, state.assignment)) {
+    logger.debug(`Complete assignment found`);
     return state;
   }
 
   // Select next variable using MRV heuristic (choose variable with fewest legal values)
   const variable = selectUnassignedVariable(csp, state);
-  if (!variable) return null;
+  if (!variable) {
+    logger.debug(`No unassigned variables found`);
+    return null;
+  }
+
+  const domainSize = state.domains.get(variable)?.size || 0;
+  logger.debug(`Selected variable ${variable} with domain size ${domainSize}`);
 
   // Get domain values ordered by least-constraining value heuristic
   const values = orderDomainValues(csp, variable, state);
+  logger.trace(`Values to try for ${variable}: ${values.join(', ')}`);
 
   // Try each value in the domain
   for (const value of values) {
+    logger.trace(`Trying ${variable} = ${value}`);
+    
     // Create new state with this variable-value assignment
     const newState = state.assign(variable, value);
 
     // Check if assignment violates any constraints
     if (!csp.isConsistent(newState.assignment)) {
+      logger.trace(`Assignment ${variable} = ${value} violates constraints`);
       continue;
     }
 
@@ -50,13 +62,19 @@ export function search(csp: CSP, state: SolverState): SolverState | null {
 
     if (inferredState) {
       // Inference succeeded (no domain wipeout)
+      logger.trace(`Inference succeeded, searching deeper`);
+      
       // Recursively search deeper with reduced domains
       const result = search(csp, inferredState);
       if (result) return result;
+      
+      logger.debug(`Backtracking from ${variable} = ${value}`);
+    } else {
+      logger.debug(`Domain wipeout after ${variable} = ${value}, backtracking`);
     }
-    // If inference failed or recursive search failed, backtrack
   }
 
+  logger.debug(`No valid values for ${variable}, backtracking`);
   return null; // All values tried, no solution in this branch
 }
 

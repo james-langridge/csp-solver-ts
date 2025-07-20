@@ -3,6 +3,7 @@ import { SolverResult, Variable } from "../data/types";
 import { SolverState } from "./state";
 import { search } from "./search";
 import { Domain } from "../data/domain";
+import { logger } from "../utils/logger";
 
 /**
  * Solves a Constraint Satisfaction Problem using backtracking search with
@@ -27,10 +28,17 @@ import { Domain } from "../data/domain";
 export function solveCSP(csp: CSP): SolverResult {
   const startTime = performance.now();
 
+  logger.info(`Starting CSP solver`, {
+    variables: csp.variables.length,
+    constraints: csp.constraints.length,
+  });
+
   // Initialize solver state with original domains
   const initialDomains = new Map<Variable, Domain>();
   for (const variable of csp.variables) {
-    initialDomains.set(variable, csp.getDomain(variable));
+    const domain = csp.getDomain(variable);
+    initialDomains.set(variable, domain);
+    logger.debug(`Variable ${variable} has domain size ${domain.size}`);
   }
 
   const initialState = new SolverState(new Map(), initialDomains, {
@@ -38,12 +46,20 @@ export function solveCSP(csp: CSP): SolverResult {
     inferencesApplied: 0,
   });
 
+  logger.info(`Beginning search`);
+
   // Run backtracking search with inference
   const finalState = search(csp, initialState);
 
   const endTime = performance.now();
 
   if (finalState) {
+    logger.info(`Solution found!`, {
+      timeMs: endTime - startTime,
+      nodesExplored: finalState.stats.nodesExplored,
+      inferencesApplied: finalState.stats.inferencesApplied,
+    });
+    
     return {
       success: true,
       assignment: finalState.assignment,
@@ -54,6 +70,12 @@ export function solveCSP(csp: CSP): SolverResult {
     };
   } else {
     // Search space exhausted without finding solution
+    logger.info(`No solution exists`, {
+      timeMs: endTime - startTime,
+      nodesExplored: initialState.stats.nodesExplored,
+      inferencesApplied: initialState.stats.inferencesApplied,
+    });
+    
     return {
       success: false,
       reason: "No solution exists that satisfies all constraints",

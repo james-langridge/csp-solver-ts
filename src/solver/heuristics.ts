@@ -1,6 +1,7 @@
 import { CSP } from "../data/csp";
 import { Variable, Value } from "../data/types";
 import { SolverState } from "./state";
+import { logger } from "../utils/logger";
 
 /**
  * Selects the next unassigned variable using the MRV (Minimum Remaining Values)
@@ -33,6 +34,8 @@ export function selectUnassignedVariable(
     const domainSize = domain.size;
     const constraintCount = csp.getConstraintsInvolving(variable).length;
 
+    logger.trace(`Variable ${variable}: domain size ${domainSize}, constraints ${constraintCount}`);
+
     // MRV: Choose variable with minimum remaining values in domain
     // Degree heuristic: Among ties, choose variable with most constraints
     if (
@@ -43,6 +46,10 @@ export function selectUnassignedVariable(
       minValues = domainSize;
       maxConstraints = constraintCount;
     }
+  }
+
+  if (bestVariable) {
+    logger.debug(`MRV selected ${bestVariable} (domain size: ${minValues}, constraints: ${maxConstraints})`);
   }
 
   return bestVariable;
