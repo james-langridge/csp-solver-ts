@@ -1,6 +1,7 @@
-# CSP Solver - TypeScript
+# CSP Solver Playground
 
-A Constraint Satisfaction Problem (CSP) solver implemented in TypeScript. This implementation uses backtracking search with MRV heuristic and AC-3 constraint propagation.
+> [!CAUTION]
+> This is a playground implementation for experimentation and learning. Use with caution.
 
 ## Features
 
